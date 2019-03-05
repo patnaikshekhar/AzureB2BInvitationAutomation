@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <style>
+            .main-content {
+                margin-top: 50px;
+                padding-left: 20%;
+            }
+        </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-light bg-light">
+            <a class="navbar-brand" href="#">Register</a>
+        </nav>
+        <div class="row main-content container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Employee Number</th>
+                        <th scope="col">Email Address</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Registrations}}
+                    <tr>
+                        <td>{{.Name}}</td>
+                        <td>{{.Number}}</td>
+                        <td>{{.Email}}</td>
+                        <td><button data-id="{{.Email}}" class="approve-button btn btn-primary">Approve</button></td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+            <script>
+                $('.approve-button').on('click', (e) => {
+                    let email = e.target.dataset.id
+                    console.log('Sending approval for', email)
+                    if (email) {
+                        let data = {
+                            Email: email,
+                            AccessToken: '{{.AccessToken}}'
+                        }
+                        $.ajax({
+                            type: 'POST',
+                            url: '/approve',
+                            data: JSON.stringify(data)
+                        }).then(data => {
+                                console.log('Approval successful')
+                                alert('Invitation Sent')
+                                $(e.target).hide()
+                            })
+                            .catch((e) => {
+                                console.log('Approval failed', e)
+                                alert(e.toString())
+                            })
+                    }
+                })
+            </script>
+        </div>
+    </body>
+</html>
