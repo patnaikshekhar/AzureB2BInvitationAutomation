@@ -21,7 +21,12 @@ func AdminHandler(w http.ResponseWriter, r *http.Request) {
 	// Get credentials from environment variables
 	clientID := os.Getenv("CLIENT_ID")
 	authURL := os.Getenv("AUTH_URL")
-	url := fmt.Sprintf("%s?client_id=%s&response_type=code&scope=https://graph.microsoft.com/User.Invite.All", authURL, clientID)
+	redirectURI := fmt.Sprintf("http://%s/dashboard", r.Host)
+	url := fmt.Sprintf(
+		"%s?client_id=%s&response_type=code&scope=https://graph.microsoft.com/User.Invite.All&redirect_uri=%s",
+		authURL,
+		clientID,
+		redirectURI)
 
 	// Redirect to URL
 	http.Redirect(w, r, url, 302)

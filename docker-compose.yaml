@@ -2,7 +2,7 @@ version: "3.4"
 services:
   app:
     build: .
-    image: patnaikshekhar/b2cexample
+    image: patnaikshekhar/b2binvitationdemo:1
     ports:
     - 8000:8000
     environment:

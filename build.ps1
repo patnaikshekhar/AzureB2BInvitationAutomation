@@ -1,4 +1,4 @@
 $env:GOOS = "linux"
-go build main.go
+go build
 docker-compose build
 docker-compose up

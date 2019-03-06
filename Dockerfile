@@ -1,4 +1,4 @@
 FROM alpine
 COPY ./static /static
-COPY main /app
+COPY ./demo1_b2b /app
 CMD ["./app"]
