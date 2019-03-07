@@ -28,5 +28,6 @@ func main() {
 	r.HandleFunc("/approve", ApproveUserHandler(ctx, mongoClient)).Methods("POST")
 
 	log.Println("Server Starting")
-	http.ListenAndServe(":8000", r)
+	err = http.ListenAndServeTLS(":443", "./certs/server.crt", "./certs/server.key", r)
+	panic(err)
 }

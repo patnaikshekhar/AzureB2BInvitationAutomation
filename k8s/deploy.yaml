@@ -15,8 +15,15 @@ spec:
         app: b2bdemo
     spec:
       containers:
-      - image: patnaikshekhar/b2binvitationdemo:1.4
+      - image: patnaikshekhar/b2binvitationdemo:1.10
         name: main-app
         envFrom:
         - secretRef:
             name: b2b-demo-secrets
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+      volumes:
+      - name: certs
+        secret:
+          secretName: b2b-demo-secrets

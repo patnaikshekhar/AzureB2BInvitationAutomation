@@ -21,7 +21,13 @@ func AdminHandler(w http.ResponseWriter, r *http.Request) {
 	// Get credentials from environment variables
 	clientID := os.Getenv("CLIENT_ID")
 	authURL := os.Getenv("AUTH_URL")
-	redirectURI := fmt.Sprintf("http://%s/dashboard", r.Host)
+
+	scheme := "https"
+	if r.TLS == nil {
+		scheme = "http"
+	}
+
+	redirectURI := fmt.Sprintf("%s://%s/dashboard", scheme, r.Host)
 	url := fmt.Sprintf(
 		"%s?client_id=%s&response_type=code&scope=https://graph.microsoft.com/User.Invite.All&redirect_uri=%s",
 		authURL,
@@ -37,12 +43,18 @@ func AdminDashboardHandler(ctx context.Context, mongoClient *mongo.Client) func(
 	return func(w http.ResponseWriter, r *http.Request) {
 		queryParams := r.URL.Query()
 		authCode := queryParams.Get("code")
+		scheme := "https"
+		if r.TLS == nil {
+			scheme = "http"
+		}
+
+		redirectURI := fmt.Sprintf("%s://%s/dashboard", scheme, r.Host)
 
 		if authCode == "" {
 			w.Write([]byte("Error"))
 		} else {
 			// Get Token using code
-			token, err := fetchToken(authCode)
+			token, err := fetchToken(authCode, redirectURI)
 			if err != nil {
 				w.Write([]byte("Error = " + err.Error()))
 			}
@@ -87,7 +99,7 @@ func AdminDashboardHandler(ctx context.Context, mongoClient *mongo.Client) func(
 	}
 }
 
-func fetchToken(code string) (AuthToken, error) {
+func fetchToken(code string, redirectURI string) (AuthToken, error) {
 	tokenURL := os.Getenv("TOKEN_URL")
 	clientID := os.Getenv("CLIENT_ID")
 	clientSecret := os.Getenv("CLIENT_SECRET")
@@ -97,7 +109,9 @@ func fetchToken(code string) (AuthToken, error) {
 	data.Set("client_secret", clientSecret)
 	data.Set("code", code)
 	data.Set("grant_type", "authorization_code")
+	data.Set("redirect_uri", redirectURI)
 
+	log.Printf("admin - fetchToken - Fetching token for code %s and redirect URI %s", code, redirectURI)
 	request, _ := http.NewRequest("POST", tokenURL, strings.NewReader(data.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	client := &http.Client{}
@@ -105,6 +119,7 @@ func fetchToken(code string) (AuthToken, error) {
 	response, err := client.Do(request)
 
 	if err != nil {
+		log.Fatalf("admin - fetchToken - Error calling token API %s", err.Error())
 		return AuthToken{}, err
 	}
 	defer response.Body.Close()
@@ -112,11 +127,13 @@ func fetchToken(code string) (AuthToken, error) {
 	result, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
+		log.Fatalf("admin - fetchToken - Error calling token API %s", err.Error())
 		return AuthToken{}, err
 	}
 
 	var token AuthToken
 	json.Unmarshal(result, &token)
+	log.Printf("admin - fetchToken - response from token API %s", result)
 	return token, nil
 }
 
